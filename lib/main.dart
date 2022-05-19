@@ -20,22 +20,43 @@ class MyApp extends StatelessWidget {
         appBar: AppBar(
           title: const Text(appTitle),
         ),
-        body: MyCustomForm(),
+        body: const MyCustomForm(),
       ),
     );
   }
 }
 
-class MyCustomForm extends StatelessWidget {
-  // const MyCustomForm({super.key});
+class MyCustomForm extends StatefulWidget {
+  const MyCustomForm({super.key});
 
-  TextEditingController inputValueController = TextEditingController();
+  @override
+  _MyCustomFormState createState() => _MyCustomFormState();
+}
+
+class _MyCustomFormState extends State<MyCustomForm> {
+  final inputValueController = TextEditingController();
+  var myResult = "";
+
+  var ping = Ping("");
+
+  void setMyResult(String result) {
+    setState(() {
+      myResult = result;
+    });
+  }
 
   void pingIp(String ip) async {
-    var ping = Ping(ip, count: 5);
-    var result = await ping.stream.first;
-    // pingResult = result.toString();
-    print(result);
+    ping = Ping(ip, interval: 1);
+    var result = "";
+
+    ping.stream.listen((event) {
+      result += '${event.toString()}\n';
+      setMyResult(result.toString());
+    });
+  }
+
+  void stopPing() async {
+    await ping.stop();
   }
 
   @override
@@ -55,13 +76,22 @@ class MyCustomForm extends StatelessWidget {
         ),
         Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-            child: ElevatedButton(
-              onPressed: () => {pingIp(inputValueController.text)},
-              child: const Text('PING'),
+            child: Row(
+              children: [
+                ElevatedButton(
+                    onPressed: () => {pingIp(inputValueController.text)},
+                    child: const Text('PING')),
+                const SizedBox(width: 5),
+                ElevatedButton(
+                  onPressed: () => {stopPing()},
+                  style: ElevatedButton.styleFrom(primary: Colors.red),
+                  child: const Text('STOP'),
+                ),
+              ],
             )),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-          child: Text(""),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Text(myResult),
         ),
       ],
     );
